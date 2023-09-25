@@ -105,9 +105,9 @@ bool EnableEdit    = false;
 
 int g_iLengthAuthorityCode = 20;
 
-char* szServerIpAddress = "127.127.127.127";
+char* szServerIpAddress = "192.168.0.168";
 //char *szServerIpAddress = "210.181.89.215";
-WORD g_ServerPort = 55901;
+WORD g_ServerPort = 44405;
 
 #ifdef MOVIE_DIRECTSHOW
 int  SceneFlag = MOVIE_SCENE;
@@ -2441,12 +2441,18 @@ void MainScene(HDC hDC)
         unicode::_sprintf(szMousePos, "MousePos : %d %d %d", MouseX, MouseY, MouseLButtonPush);
         unicode::t_char szCamera3D[128];
         unicode::_sprintf(szCamera3D, "Camera3D : %.1f %.1f:%.1f:%.1f", CameraFOV, CameraAngle[0], CameraAngle[1], CameraAngle[2]);
+        unicode::t_char szVersion[128];
+        unicode::_sprintf(szVersion, "Version : %s", Version);
+        unicode::t_char szSerial[128];
+        unicode::_sprintf(szSerial, "Serial : %s", Serial);
         g_pRenderText->SetFont(g_hFontBold);
-        g_pRenderText->SetBgColor(0, 0, 0, 100);
+        g_pRenderText->SetBgColor(0, 0, 0, 0);
         g_pRenderText->SetTextColor(255, 255, 255, 200);
         g_pRenderText->RenderText(10, 26, szDebugText);
         g_pRenderText->RenderText(10, 36, szMousePos);
         g_pRenderText->RenderText(10, 46, szCamera3D);
+        g_pRenderText->RenderText(10, 56, szVersion);
+        g_pRenderText->RenderText(10, 66, szSerial);
         g_pRenderText->SetFont(g_hFont);
         EndBitmap();
 #endif // defined(_DEBUG) || defined(LDS_FOR_DEVELOPMENT_TESTMODE) || defined(LDS_UNFIXED_FIXEDFRAME_FORDEBUG)

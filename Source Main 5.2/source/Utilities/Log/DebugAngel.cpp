@@ -26,8 +26,17 @@ void DebugAngel_Write(char* lpszFileName, ...)
     va_end(va);
 }
 
-void DebugAngel_HexWrite(char* lpszFileName, void* pBuffer, int iSize)
-{
+void GetCurrentTimeWrapped(char* timeStr) {
+    // Get the current time
+    time_t currentTime;
+    time(&currentTime);
+
+    // Convert the time to a string
+    std::strftime(timeStr, 64, "[%Y-%m-%d %H:%M:%S] ", std::localtime(&currentTime));
+}
+
+
+void DebugAngel_HexWrite(char* lpszFileName, void* pBuffer, int iSize, int sender) {
     HANDLE hFile = CreateFile(lpszFileName, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS,
         FILE_ATTRIBUTE_NORMAL, NULL);
     SetFilePointer(hFile, 0, NULL, FILE_END);
@@ -35,21 +44,34 @@ void DebugAngel_HexWrite(char* lpszFileName, void* pBuffer, int iSize)
 
     BYTE* pbySeek = (BYTE*)pBuffer;
     char lpszStr[1024];
-    for (int i = 0; i < iSize; i += 16)
-    {
-        lpszStr[0] = '\0';
-        int iShow = min(iSize - i, 16);
+    char logType[10] = "";
+    char timeStr[64];
 
-        // Hex 출력
-        for (int j = 0; j < iShow; j++, pbySeek++)
-        {
-            char lpszTemp[16];
-            wsprintf(lpszTemp, "0x%02X ", *pbySeek);
-            strcat(lpszStr, lpszTemp);
-        }
-        strcat(lpszStr, "\r\n");
-        WriteFile(hFile, lpszStr, strlen(lpszStr), &dwNumber, NULL);
+    lpszStr[0] = '\0';
+
+    // Get the current time wrapped in square brackets
+    GetCurrentTimeWrapped(timeStr);
+    strcat(lpszStr, timeStr);
+
+    // Append logType
+    if (sender == 1) {
+        strcpy(logType, "C->S ");
     }
+    else {
+        strcpy(logType, "S->C ");
+    }
+    strcat(lpszStr, logType);
+
+    // Hex 출력
+    for (int j = 0; j < iSize; j++, pbySeek++) {
+        char lpszTemp[16];
+        wsprintf(lpszTemp, "0x%02X ", *pbySeek);
+        strcat(lpszStr, lpszTemp);
+    }
+
+    strcat(lpszStr, "\r\n");
+
+    WriteFile(hFile, lpszStr, strlen(lpszStr), &dwNumber, NULL);
 
     CloseHandle(hFile);
 }

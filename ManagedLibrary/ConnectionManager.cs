@@ -5,6 +5,7 @@
 namespace MUnique.Client.ManagedLibrary;
 
 using Microsoft.Extensions.Logging.Abstractions;
+using MUnique.Client.Network;
 using MUnique.OpenMU.Network;
 using MUnique.OpenMU.Network.SimpleModulus;
 using MUnique.OpenMU.Network.Xor;
@@ -78,7 +79,7 @@ public unsafe class ConnectionManager
             try
             {
                 var bytes = new Span<byte>(data, count);
-                bytes.SetPacketSize();
+                Network.ArrayExtensions.SetPacketSize(bytes);
                 connection.Send(bytes);
                 Debug.WriteLine("Sent {0} bytes with handle {1}", count, handle);
             }
@@ -125,9 +126,7 @@ public unsafe class ConnectionManager
 
         var socketConnection = SocketConnection.Create(tcpClient.Client);
 
-        var encryptor = new PipelinedXor32Encryptor(new PipelinedSimpleModulusEncryptor(socketConnection.Output, PipelinedSimpleModulusEncryptor.DefaultClientKey).Writer);
-        var decryptor = new PipelinedSimpleModulusDecryptor(socketConnection.Input, PipelinedSimpleModulusDecryptor.DefaultClientKey);
-        var connection = new Connection(socketConnection, decryptor, encryptor, new NullLogger<Connection>());
+        var connection = new Network.Connection(socketConnection, new NullLogger<Network.Connection>());
 
         var handle = Interlocked.Increment(ref _maxHandle);
         var wrapper = new ConnectionWrapper(handle, connection, onPacketReceived, onDisconnected);

@@ -1,6 +1,6 @@
 ﻿namespace MUnique.Client.ManagedLibrary;
 
-using MUnique.OpenMU.Network;
+using MUnique.Client.Network;
 using Nito.AsyncEx.Synchronous;
 using System;
 using System.Buffers;

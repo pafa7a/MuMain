@@ -68,12 +68,6 @@ extern Connection* g_pSocketClient;
 
 __forceinline void SendPacket(const BYTE* buf, int32_t len)
 {
-#ifdef SAVE_PACKET
-    LPPHEADER_DEFAULT_SUBCODE pData = (LPPHEADER_DEFAULT_SUBCODE)buf;
-    std::string timeString;
-    leaf::GetTimeString(timeString);
-    DebugAngel_Write((char*)PACKET_SAVE_FILE, "%s Send \t0x%02X 0x%02X (size = %d)\r\n", timeString.c_str(), pData->Header.HeadCode, pData->SubCode, len);
-#endif
 
     // TODO: this code is pure bullshit, i know. We should get rid of global variables.
     if (g_pSocketClient == nullptr)
@@ -190,8 +184,6 @@ extern BYTE Serial[SIZE_PROTOCOLSERIAL + 1];
 	ZeroMemory( lpszPass, MAX_PASSWORD_SIZE+1);\
 	strncpy(lpszID, p_lpszID, MAX_ID_SIZE);\
 	strncpy(lpszPass, p_lpszPassword, MAX_PASSWORD_SIZE);\
-	BuxConvert(( BYTE*)lpszID,MAX_ID_SIZE);\
-	BuxConvert(( BYTE*)lpszPass,MAX_PASSWORD_SIZE);\
 	spe.AddData( lpszID, MAX_ID_SIZE);\
 	spe.AddData( lpszPass, MAX_PASSWORD_SIZE);\
 	spe << GetTickCount();\

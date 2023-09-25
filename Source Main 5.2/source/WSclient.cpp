@@ -110,8 +110,8 @@ MASTER_LEVEL_VALUE	Master_Level_Data;
 
 //BYTE Version[SIZE_PROTOCOLVERSION] = {'1'+1, '0'+2, '4'+3, '0'+4, '5'+5};
 //BYTE Serial[SIZE_PROTOCOLSERIAL+1] = {"TbYehR2hFUPBKgZj"};
-BYTE Version[SIZE_PROTOCOLVERSION] = { '1' + 1, '0' + 2, '4' + 3, '0' + 4, '4' + 5 };
-BYTE Serial[SIZE_PROTOCOLSERIAL + 1] = { "k1Pk2jcET48mxL3b" };
+BYTE Version[SIZE_PROTOCOLVERSION] = { '1' + 1, '0' + 2, '4' + 3, '0' + 4, '5' + 5 };
+BYTE Serial[SIZE_PROTOCOLSERIAL + 1] = { "TbYehR2hFUPBKgZj" };
 
 Connection* g_pSocketClient = nullptr;
 
@@ -167,7 +167,7 @@ BOOL CreateSocket(char* IpAddr, unsigned short Port)
     BOOL bResult = TRUE;
     g_byPacketSerialSend = 0;
     g_byPacketSerialRecv = 0;
-    g_ConsoleDebug->Write(MCD_NORMAL, "[Connect to Server] ip address = %s, port = %d", IpAddr, Port);
+    g_ConsoleDebug->Write(MCD_NORMAL, "\r\n[Connect to Server] ip address = %s, port = %d", IpAddr, Port);
     SocketClient = new Connection(IpAddr, Port, &HandleIncomingPacketLocked);
     g_pSocketClient = SocketClient;
     if (!SocketClient->IsConnected())

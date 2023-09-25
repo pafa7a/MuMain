@@ -3,6 +3,8 @@
 
 #include "Connection.h"
 #include "DotNetRuntime.h"
+#include <Utilities/Log/DebugAngel.h>
+#include <wsclientinline.h>
 
 std::map<int32_t, Connection*> connections;
 
@@ -87,6 +89,10 @@ void Connection::Send(const BYTE* data, const int32_t size)
         return;
     }
 
+#ifdef SAVE_PACKET
+    LPPHEADER_DEFAULT_SUBCODE pData = (LPPHEADER_DEFAULT_SUBCODE)data;
+    DebugAngel_HexWrite((char*)PACKET_SAVE_FILE, pData, size, 1);
+#endif
     dotnet_send(this->_handle, data, size);
 }
 
@@ -113,6 +119,11 @@ void Connection::OnDisconnected()
 
 void Connection::OnPacketReceived(const BYTE* data, const int32_t size)
 {
-    printf("Received packet, size %d", size);
+    printf("\r\nReceived packet, size %d\r\n", size);
+
+#ifdef SAVE_PACKET
+    LPPHEADER_DEFAULT_SUBCODE pData = (LPPHEADER_DEFAULT_SUBCODE)data;
+    DebugAngel_HexWrite((char*)PACKET_SAVE_FILE, pData, size, 2);
+#endif
     this->_packetHandler(this->_handle, data, size);
 }
