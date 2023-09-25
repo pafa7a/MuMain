@@ -14,7 +14,8 @@
 #define	SMW_BTN_SERVER_SEL	1
 #define	SMW_BTN_OPTION		2
 #define	SMW_BTN_CLOSE		3
-#define	SMW_BTN_MAX			4
+#define	SMW_BTN_WEBSITE		4
+#define	SMW_BTN_MAX			5
 
 class CSysMenuWin : public CWin
 {

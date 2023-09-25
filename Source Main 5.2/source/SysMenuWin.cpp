@@ -38,7 +38,7 @@ void CSysMenuWin::Create()
     SImgInfo aiiBack[WE_BG_MAX] =
     {
         { BITMAP_SYS_WIN, 0, 0, 128, 128 },
-        { BITMAP_SYS_WIN + 1, 0, 0, 213, 64 },
+        { BITMAP_SYS_WIN + 1, 0, 0, 213, 115 },
         { BITMAP_SYS_WIN + 2, 0, 0, 213, 43 },
         { BITMAP_SYS_WIN + 3, 0, 0, 5, 8 },
         { BITMAP_SYS_WIN + 4, 0, 0, 5, 8 }
@@ -46,7 +46,7 @@ void CSysMenuWin::Create()
     m_winBack.Create(aiiBack, 1, 10);
 
     const char* apszBtnText[SMW_BTN_MAX] =
-    { GlobalText[381], GlobalText[382], GlobalText[385], GlobalText[388] };
+    { GlobalText[381], GlobalText[382], GlobalText[385], GlobalText[388], "Website"};
     DWORD adwBtnClr[4] =
     { CLRDW_BR_GRAY, CLRDW_BR_GRAY, CLRDW_WHITE, 0 };
     for (int i = 0; i < SMW_BTN_MAX; ++i)
@@ -84,12 +84,14 @@ void CSysMenuWin::SetPosition(int nXCoord, int nYCoord)
     int nBtnPosX = m_winBack.GetXPos() + (m_winBack.GetWidth() - m_aBtn[0].GetWidth()) / 2;
     int nBtnGap = SMW_BTN_GAP + m_aBtn[0].GetHeight();
     int nBtnPosBaseTop = m_winBack.GetYPos() + 33;
-    for (int i = 0; i < SMW_BTN_OPTION; ++i)
+    for (int i = 0; i < SMW_BTN_MAX; i++) {
         m_aBtn[i].SetPosition(nBtnPosX, nBtnPosBaseTop + i * nBtnGap);
+    }
 
-    int nCloseBtnPosY = m_winBack.GetYPos() + m_winBack.GetHeight() - 52;
-    m_aBtn[SMW_BTN_CLOSE].SetPosition(nBtnPosX, nCloseBtnPosY);
+    int nCloseBtnPosY = m_winBack.GetYPos() + m_winBack.GetHeight() - 104;
+    m_aBtn[SMW_BTN_CLOSE].SetPosition(nBtnPosX, nCloseBtnPosY + nBtnGap);
     m_aBtn[SMW_BTN_OPTION].SetPosition(nBtnPosX, nCloseBtnPosY - nBtnGap);
+    m_aBtn[SMW_BTN_WEBSITE].SetPosition(nBtnPosX, nCloseBtnPosY);
 }
 void CSysMenuWin::Show(bool bShow)
 {
@@ -116,7 +118,13 @@ bool CSysMenuWin::CursorInWin(int nArea)
 
 void CSysMenuWin::UpdateWhileActive(double dDeltaTick)
 {
-    if (m_aBtn[SMW_BTN_GAME_END].IsClick())
+    if (m_aBtn[SMW_BTN_WEBSITE].IsClick())
+    {
+        system("start https://mu-js.com");
+        CUIMng::Instance().SetSysMenuWinShow(false);
+        CUIMng::Instance().HideWin(this);
+    }
+    else if (m_aBtn[SMW_BTN_GAME_END].IsClick())
     {
         CUIMng::Instance().PopUpMsgWin(MESSAGE_GAME_END_COUNTDOWN);
     }
