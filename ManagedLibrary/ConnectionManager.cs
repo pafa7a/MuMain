@@ -143,6 +143,11 @@ public static unsafe class ConnectionManager
         {
             while (true)
             {
+                if (!stream.CanRead)
+                {
+                    break;
+                }
+
                 int bytesRead = stream.Read(buffer, 0, buffer.Length);
                 int realSize = GetPacketSize(buffer);
                 byte[] receivedData = new byte[realSize];
