@@ -25,11 +25,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="MUnique.OpenMU.Network.Packets" Version="0.7.14" />
-		<PackageReference Include="Pipelines.Sockets.Unofficial" Version="2.2.2" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
 		<None Include="..\.editorconfig" Link=".editorconfig" />
 	</ItemGroup>

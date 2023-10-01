@@ -74,7 +74,7 @@ DotNetRuntime::DotNetRuntime()
 
     load_func = get_dotnet_load_assembly(config_path.c_str());
     assert(load_func != nullptr && "Failure: get_dotnet_load_assembly()");
-	dotnetlib_path = runtimePath + L"\\MUnique.Client.ManagedLibrary.dll";
+	dotnetlib_path = runtimePath + L"\\MuJS.dll";
 
     is_initialized_ = true;
 }

@@ -15,7 +15,7 @@ typedef int32_t(CORECLR_DELEGATE_CALLTYPE* Connect)(const char*, int32_t, onPack
 typedef void(CORECLR_DELEGATE_CALLTYPE* Disconnect)(int32_t);
 typedef void(CORECLR_DELEGATE_CALLTYPE* Send)(int32_t, const BYTE*, int32_t);
 
-char_t* type_name = L"MUnique.Client.ManagedLibrary.ConnectionManager, MUnique.Client.ManagedLibrary";
+char_t* type_name = L"MuJS.ConnectionManager, MuJS";
 Connect dotnet_connect = reinterpret_cast<Connect>(
     g_dotnet->get_method(
         type_name,

@@ -1,8 +1,8 @@
-﻿// <copyright file="ConnectionManager.cs" company="MUnique">
+﻿// <copyright file="ConnectionManager.cs" company="MuJS">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
-namespace MUnique.Client.ManagedLibrary;
+namespace MuJS;
 
 using System;
 using System.Collections.Generic;
@@ -15,13 +15,12 @@ using System.Threading;
 /// Class which manages the connections which are created through the game client.
 /// To identify each connection, we use handles (a simple number).
 /// </summary>
-public unsafe static class ConnectionManager
+public static unsafe class ConnectionManager
 {
     /// <summary>
     /// The currently active connections, with their handle as key.
     /// </summary>
     private static readonly Dictionary<int, NetworkStream> Connections = new();
-
 
     /// <summary>
     /// The currently used maximum handle number.
@@ -47,11 +46,9 @@ public unsafe static class ConnectionManager
     [UnmanagedCallersOnly]
     public static int Connect(IntPtr hostPtr, int port, delegate* unmanaged<int, int, byte*, void> onPacketReceived, delegate* unmanaged<int, void> onDisconnected)
     {
-        
         try
         {
             var host = Marshal.PtrToStringAnsi(hostPtr) ?? throw new ArgumentNullException(nameof(hostPtr));
-
 
             TcpClient client = new TcpClient();
             client.Connect(host, port);
@@ -60,10 +57,10 @@ public unsafe static class ConnectionManager
             Console.WriteLine("Connected to the server.");
             var handle = Interlocked.Increment(ref _maxHandle);
             Connections.Add(handle, stream);
-            // Create a thread to listen for incoming data
-            Thread listenThread = new Thread(() => ListenForData(stream, onPacketReceived, onDisconnected, handle));
-            listenThread.Start();
 
+            // Create a thread to listen for incoming data
+            Thread listenThread = new(() => ListenForData(stream, onPacketReceived, onDisconnected, handle));
+            listenThread.Start();
 
             return handle;
         }
@@ -71,43 +68,6 @@ public unsafe static class ConnectionManager
         {
             Debug.WriteLine($"Error establishing connection: {ex}");
             return -1;
-        }
-    }
-
-    static void ListenForData(NetworkStream stream, delegate* unmanaged<int, int, byte*, void> onPacketReceived, delegate* unmanaged<int, void> onDisconnected, int handle)
-    {
-        byte[] buffer = new byte[1024];
-
-        try
-        {
-            while (true)
-            {
-                int bytesRead = stream.Read(buffer, 0, buffer.Length);
-                int realSize = GetPacketSize(buffer);
-                byte[] receivedData = new byte[realSize];
-                buffer.AsSpan(0, realSize).CopyTo(receivedData);
-
-                if (bytesRead > 0)
-                {
-                    fixed (byte* dataPtr = receivedData)
-                    {
-                        if (realSize == 0)
-                        {
-                            Debug.WriteLine("Receiving packet with 0 length...");
-                        }
-                        else
-                        {
-                            onPacketReceived(handle, bytesRead, dataPtr);
-                        }
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error occurred while listening for data: {ex.Message}");
-            // Call the onDisconnected delegate when an error occurs
-            onDisconnected(handle);
         }
     }
 
@@ -153,18 +113,63 @@ public unsafe static class ConnectionManager
         }
     }
 
-    public static int GetPacketSize(this Span<byte> packet)
+    /// <summary>
+    /// Gets the packet size.
+    /// </summary>
+    /// <param name="packet">The packet bytes.</param>
+    /// <returns>The packet size.</returns>
+    private static int GetPacketSize(this Span<byte> packet)
     {
-        switch (packet[0])
+        return packet[0] switch
         {
-            case 0xC1:
-            case 0xC3:
-                return packet[1];
-            case 0xC2:
-            case 0xC4:
-                return packet[1] << 8 | packet[2];
-            default:
-                return 0;
+            0xC1 or 0xC3 => packet[1],
+            0xC2 or 0xC4 => packet[1] << 8 | packet[2],
+            _ => 0,
+        };
+    }
+
+    /// <summary>
+    /// Thread that listens for incoming packets.
+    /// </summary>
+    /// <param name="stream">The connection stream.</param>
+    /// <param name="onPacketReceived">Callback for onPacketReceived.</param>
+    /// <param name="onDisconnected">Callback for onDisconnected.</param>
+    /// <param name="handle">ID of the connection.</param>
+    private static void ListenForData(NetworkStream stream, delegate* unmanaged<int, int, byte*, void> onPacketReceived, delegate* unmanaged<int, void> onDisconnected, int handle)
+    {
+        byte[] buffer = new byte[1024];
+
+        try
+        {
+            while (true)
+            {
+                int bytesRead = stream.Read(buffer, 0, buffer.Length);
+                int realSize = GetPacketSize(buffer);
+                byte[] receivedData = new byte[realSize];
+                buffer.AsSpan(0, realSize).CopyTo(receivedData);
+
+                if (bytesRead > 0)
+                {
+                    fixed (byte* dataPtr = receivedData)
+                    {
+                        if (realSize == 0)
+                        {
+                            Debug.WriteLine("Receiving packet with 0 length...");
+                        }
+                        else
+                        {
+                            onPacketReceived(handle, bytesRead, dataPtr);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while listening for data: {ex.Message}");
+
+            // Call the onDisconnected delegate when an error occurs
+            onDisconnected(handle);
         }
     }
 }
