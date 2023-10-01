@@ -62,7 +62,7 @@ DotNetRuntime::DotNetRuntime()
     runtimePath.resize(pathSize);
 
     // STEP 2: Initialize and start the .NET Core runtime
-    const string_t config_path = runtimePath + L"\\Native.NETHostFxr.runtimeconfig.json";
+    const string_t config_path = runtimePath + L"\\Data\\Native.NETHostFxr.runtimeconfig.json";
 
     int rc = init_runtime_cfg_fptr_(config_path.c_str(), nullptr, &cxt_);
     if (rc != 0 || cxt_ == nullptr)
