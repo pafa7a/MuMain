@@ -4,30 +4,24 @@
 
 namespace MUnique.Client.ManagedLibrary;
 
-using Microsoft.Extensions.Logging.Abstractions;
-using MUnique.Client.Network;
-using MUnique.OpenMU.Network;
-using MUnique.OpenMU.Network.SimpleModulus;
-using MUnique.OpenMU.Network.Xor;
-using Pipelines.Sockets.Unofficial;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
 
 /// <summary>
 /// Class which manages the connections which are created through the game client.
 /// To identify each connection, we use handles (a simple number).
 /// </summary>
-public unsafe class ConnectionManager
+public unsafe static class ConnectionManager
 {
     /// <summary>
     /// The currently active connections, with their handle as key.
     /// </summary>
-    private static readonly Dictionary<int, ConnectionWrapper> Connections = new();
+    private static readonly Dictionary<int, NetworkStream> Connections = new();
+
 
     /// <summary>
     /// The currently used maximum handle number.
@@ -53,15 +47,67 @@ public unsafe class ConnectionManager
     [UnmanagedCallersOnly]
     public static int Connect(IntPtr hostPtr, int port, delegate* unmanaged<int, int, byte*, void> onPacketReceived, delegate* unmanaged<int, void> onDisconnected)
     {
+        
         try
         {
             var host = Marshal.PtrToStringAnsi(hostPtr) ?? throw new ArgumentNullException(nameof(hostPtr));
-            return ConnectInner(host, port, onPacketReceived, onDisconnected);
+
+
+            TcpClient client = new TcpClient();
+            client.Connect(host, port);
+            NetworkStream stream = client.GetStream();
+
+            Console.WriteLine("Connected to the server.");
+            var handle = Interlocked.Increment(ref _maxHandle);
+            Connections.Add(handle, stream);
+            // Create a thread to listen for incoming data
+            Thread listenThread = new Thread(() => ListenForData(stream, onPacketReceived, onDisconnected, handle));
+            listenThread.Start();
+
+
+            return handle;
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Error establishing connection: {ex}");
             return -1;
+        }
+    }
+
+    static void ListenForData(NetworkStream stream, delegate* unmanaged<int, int, byte*, void> onPacketReceived, delegate* unmanaged<int, void> onDisconnected, int handle)
+    {
+        byte[] buffer = new byte[1024];
+
+        try
+        {
+            while (true)
+            {
+                int bytesRead = stream.Read(buffer, 0, buffer.Length);
+                int realSize = GetPacketSize(buffer);
+                byte[] receivedData = new byte[realSize];
+                buffer.AsSpan(0, realSize).CopyTo(receivedData);
+
+                if (bytesRead > 0)
+                {
+                    fixed (byte* dataPtr = receivedData)
+                    {
+                        if (realSize == 0)
+                        {
+                            Debug.WriteLine("Receiving packet with 0 length...");
+                        }
+                        else
+                        {
+                            onPacketReceived(handle, bytesRead, dataPtr);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while listening for data: {ex.Message}");
+            // Call the onDisconnected delegate when an error occurs
+            onDisconnected(handle);
         }
     }
 
@@ -78,9 +124,9 @@ public unsafe class ConnectionManager
         {
             try
             {
-                var bytes = new Span<byte>(data, count);
-                Network.ArrayExtensions.SetPacketSize(bytes);
-                connection.Send(bytes);
+                byte[] buffer = new byte[count];
+                Marshal.Copy((IntPtr)data, buffer, 0, count);
+                connection.Write(buffer, 0, count);
                 Debug.WriteLine("Sent {0} bytes with handle {1}", count, handle);
             }
             catch (Exception ex)
@@ -95,19 +141,6 @@ public unsafe class ConnectionManager
     }
 
     /// <summary>
-    /// Begins receiving data for the connection of the specified handle.
-    /// </summary>
-    /// <param name="connectionHandle">The handle of the connection.</param>
-    [UnmanagedCallersOnly]
-    public static void BeginReceive(int connectionHandle)
-    {
-        if (Connections.TryGetValue(connectionHandle, out var connection))
-        {
-            connection.BeginReceive();
-        }
-    }
-
-    /// <summary>
     /// Disconnects the connection of the specified handle.
     /// </summary>
     /// <param name="connectionHandle">The handle of the connection.</param>
@@ -116,28 +149,22 @@ public unsafe class ConnectionManager
     {
         if (Connections.TryGetValue(connectionHandle, out var connection))
         {
-            connection.DisconnectAndDispose();
+            connection.Close();
         }
     }
 
-    private static int ConnectInner(string host, int port, delegate* unmanaged<int, int, byte*, void> onPacketReceived, delegate* unmanaged<int, void> onDisconnected)
+    public static int GetPacketSize(this Span<byte> packet)
     {
-        var tcpClient = new TcpClient(host, port);
-
-        var socketConnection = SocketConnection.Create(tcpClient.Client);
-
-        var connection = new Network.Connection(socketConnection, new NullLogger<Network.Connection>());
-
-        var handle = Interlocked.Increment(ref _maxHandle);
-        var wrapper = new ConnectionWrapper(handle, connection, onPacketReceived, onDisconnected);
-        Connections.Add(handle, wrapper);
-
-        connection.Disconnected += () =>
+        switch (packet[0])
         {
-            Connections.Remove(handle);
-            return ValueTask.CompletedTask;
-        };
-
-        return handle;
+            case 0xC1:
+            case 0xC3:
+                return packet[1];
+            case 0xC2:
+            case 0xC4:
+                return packet[1] << 8 | packet[2];
+            default:
+                return 0;
+        }
     }
 }

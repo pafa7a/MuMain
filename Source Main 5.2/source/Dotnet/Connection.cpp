@@ -13,7 +13,6 @@ using onDisconnected = void(int32_t);
 
 typedef int32_t(CORECLR_DELEGATE_CALLTYPE* Connect)(const char*, int32_t, onPacketReceived, onDisconnected);
 typedef void(CORECLR_DELEGATE_CALLTYPE* Disconnect)(int32_t);
-typedef void(CORECLR_DELEGATE_CALLTYPE* BeginReceive)(int32_t);
 typedef void(CORECLR_DELEGATE_CALLTYPE* Send)(int32_t, const BYTE*, int32_t);
 
 char_t* type_name = L"MUnique.Client.ManagedLibrary.ConnectionManager, MUnique.Client.ManagedLibrary";
@@ -26,11 +25,6 @@ Disconnect dotnet_disconnect = reinterpret_cast<Disconnect>(
     g_dotnet->get_method(
         type_name,
         L"Disconnect"));
-
-BeginReceive dotnet_beginreceive = reinterpret_cast<BeginReceive>(
-    g_dotnet->get_method(
-        type_name,
-        L"BeginReceive"));
 
 Send dotnet_send = reinterpret_cast<Send>(
     g_dotnet->get_method(
@@ -60,11 +54,7 @@ Connection::Connection(const char* host, int32_t port, void(*packetHandler)(int3
     this->_packetHandler = packetHandler;
     this->_handle = dotnet_connect(host, port, &OnPacketReceivedS, &OnDisconnectedS);
 
-    if (IsConnected())
-    {
-        connections[this->_handle] = this;
-        dotnet_beginreceive(this->_handle);
-    }
+    connections[this->_handle] = this;
 }
 
 Connection::~Connection()
