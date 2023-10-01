@@ -109,8 +109,6 @@ void Connection::OnDisconnected()
 
 void Connection::OnPacketReceived(const BYTE* data, const int32_t size)
 {
-    printf("\r\nReceived packet, size %d\r\n", size);
-
 #ifdef SAVE_PACKET
     LPPHEADER_DEFAULT_SUBCODE pData = (LPPHEADER_DEFAULT_SUBCODE)data;
     DebugAngel_HexWrite((char*)PACKET_SAVE_FILE, pData, size, 2);

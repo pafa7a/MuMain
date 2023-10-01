@@ -305,8 +305,6 @@ void ReceiveServerList(const BYTE* ReceiveBuffer)
     }
 
     g_ErrorReport.Write("Success Receive Server List.\r\n");
-
-    g_ConsoleDebug->Write(MCD_RECEIVE, "0xF4 [ReceiveServerList]");
 }
 void ReceiveServerConnect(const BYTE* ReceiveBuffer) //Recebe informação do ConnectServer sobre a sala e envia a conexão para a sala escolhida
 {

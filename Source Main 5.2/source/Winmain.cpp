@@ -1404,11 +1404,11 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLin
 
     if (g_dotnet->is_initialized())
     {
-        g_ErrorReport.Write(".net runtime loaded :)");
+        g_ErrorReport.Write(".net runtime loaded :)\r\n");
     }
     else
     {
-        g_ErrorReport.Write(".net runtime failed to load :(");
+        g_ErrorReport.Write(".net runtime failed to load :(\r\n");
     }
 
     switch (WindowHeight)

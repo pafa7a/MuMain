@@ -6,9 +6,12 @@ namespace MuJS;
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Net.Security;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading;
 
 /// <summary>
@@ -20,7 +23,7 @@ public static unsafe class ConnectionManager
     /// <summary>
     /// The currently active connections, with their handle as key.
     /// </summary>
-    private static readonly Dictionary<int, NetworkStream> Connections = new();
+    private static readonly Dictionary<int, SslStream> Connections = new();
 
     /// <summary>
     /// The currently used maximum handle number.
@@ -52,21 +55,39 @@ public static unsafe class ConnectionManager
 
             TcpClient client = new TcpClient();
             client.Connect(host, port);
-            NetworkStream stream = client.GetStream();
+
+            // Create an SSL stream over the network stream
+            SslStream sslStream = new(client.GetStream(), false, (sender, certificate, chain, errors) =>
+            {
+                return true;
+            });
+
+            // Authenticate using your SSL certificate
+            X509Certificate2 certificate = new X509Certificate2("Data\\server.crt");
+            sslStream.AuthenticateAsClient(host, new X509Certificate2Collection(certificate), SslProtocols.Tls12, false);
+
+            if (sslStream.IsAuthenticated)
+            {
+                Console.WriteLine("SSL connection established successfully.");
+            }
+            else
+            {
+                Console.WriteLine("SSL connection could not be established.");
+            }
 
             Console.WriteLine("Connected to the server.");
             var handle = Interlocked.Increment(ref _maxHandle);
-            Connections.Add(handle, stream);
+            Connections.Add(handle, sslStream);
 
             // Create a thread to listen for incoming data
-            Thread listenThread = new(() => ListenForData(stream, onPacketReceived, onDisconnected, handle));
+            Thread listenThread = new(() => ListenForData(sslStream, onPacketReceived, onDisconnected, handle));
             listenThread.Start();
 
             return handle;
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Error establishing connection: {ex}");
+            Console.WriteLine($"Error establishing connection: {ex}");
             return -1;
         }
     }
@@ -87,16 +108,19 @@ public static unsafe class ConnectionManager
                 byte[] buffer = new byte[count];
                 Marshal.Copy((IntPtr)data, buffer, 0, count);
                 connection.Write(buffer, 0, count);
-                Debug.WriteLine("Sent {0} bytes with handle {1}", count, handle);
+
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine($"[MuJS] C->S {BytesToHex(buffer)}");
+                Console.ResetColor();
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error sending {0} bytes with handle {1}: {2}", count, handle, ex);
+                Console.WriteLine($"Error sending {0} bytes with handle {1}: {2}", count, handle, ex);
             }
         }
         else
         {
-            Debug.WriteLine("Connection with handle {0} not found.", handle);
+            Console.WriteLine("Connection with handle {0} not found.", handle);
         }
     }
 
@@ -135,7 +159,7 @@ public static unsafe class ConnectionManager
     /// <param name="onPacketReceived">Callback for onPacketReceived.</param>
     /// <param name="onDisconnected">Callback for onDisconnected.</param>
     /// <param name="handle">ID of the connection.</param>
-    private static void ListenForData(NetworkStream stream, delegate* unmanaged<int, int, byte*, void> onPacketReceived, delegate* unmanaged<int, void> onDisconnected, int handle)
+    private static void ListenForData(SslStream stream, delegate* unmanaged<int, int, byte*, void> onPacketReceived, delegate* unmanaged<int, void> onDisconnected, int handle)
     {
         byte[] buffer = new byte[1024];
 
@@ -159,10 +183,13 @@ public static unsafe class ConnectionManager
                     {
                         if (realSize == 0)
                         {
-                            Debug.WriteLine("Receiving packet with 0 length...");
+                            Console.WriteLine("Receiving packet with 0 length...");
                         }
                         else
                         {
+                            Console.ForegroundColor = ConsoleColor.DarkCyan;
+                            Console.WriteLine($"[MuJS] S->C {BytesToHex(receivedData)}");
+                            Console.ResetColor();
                             onPacketReceived(handle, bytesRead, dataPtr);
                         }
                     }
@@ -176,5 +203,26 @@ public static unsafe class ConnectionManager
             // Call the onDisconnected delegate when an error occurs
             onDisconnected(handle);
         }
+    }
+
+    /// <summary>
+    /// Converts byte array to hex string.
+    /// </summary>
+    /// <param name="bytes">The buffer.</param>
+    /// <returns>HEX string.</returns>
+    private static string BytesToHex(byte[] bytes)
+    {
+        if (bytes == null)
+        {
+            return string.Empty;
+        }
+
+        StringBuilder hex = new(bytes.Length * 2);
+        foreach (byte b in bytes)
+        {
+            hex.AppendFormat("{0:X2} ", b);
+        }
+
+        return hex.ToString();
     }
 }
