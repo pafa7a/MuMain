@@ -173,6 +173,15 @@ public static unsafe class ConnectionManager
                 }
 
                 int bytesRead = stream.Read(buffer, 0, buffer.Length);
+
+                // Check if the server closed the connection.
+                if (bytesRead == 0)
+                {
+                    Console.WriteLine("Server closed the connection.");
+                    onDisconnected(handle);
+                    break;
+                }
+
                 int realSize = GetPacketSize(buffer);
                 byte[] receivedData = new byte[realSize];
                 buffer.AsSpan(0, realSize).CopyTo(receivedData);
