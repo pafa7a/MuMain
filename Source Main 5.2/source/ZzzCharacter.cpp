@@ -12131,29 +12131,52 @@ void ChangeCharacterExt(int Key, BYTE* Equipment, CHARACTER* pCharacter, OBJECT*
             break;
         }
     }
-    else if (Type == 3)		//3차 날개
+    else if (Type == 3)
     {
         Type = Equipment[8] & 0x07;
-        switch (Type)
+        if (Type != 0)
         {
-        case 0:				//작은날개
-        {
-            Type = (Equipment[16] >> 5);
-            c->Wing.Type = MODEL_WING + 129 + Type;
+            switch (Type)
+            {
+            case 5:		c->Wing.Type = MODEL_HELPER + 30;	break;
+            case 6:		c->Wing.Type = MODEL_WING + 41;	break;
+            case 7:		c->Wing.Type = MODEL_WING + 42;	break;
+            default:	c->Wing.Type = MODEL_WING + Type + 2;
+            }
         }
-        break;
-        case 6:		c->Wing.Type = MODEL_WING + 43; break;
-        case 7:		c->Wing.Type = MODEL_WING + 50; break;
-        default:
-            c->Wing.Type = MODEL_WING + 35 + Type;
-            break;
+        else
+        {
+            c->Wing.Type = -1;
+            c->Wing.Option1 = 0;
+            c->Wing.ExtOption = 0;
         }
     }
     else
     {
-        c->Wing.Type = -1;
-        c->Wing.Option1 = 0;
-        c->Wing.ExtOption = 0;
+        c->Wing.Type = MODEL_WING + Type;
+    }
+
+    Type = (Equipment[15] >> 2) & 0x07;
+    if (Type > 0)
+    {
+        switch (Type)
+        {
+        case 6:		c->Wing.Type = MODEL_WING + 43;	break;
+        default:	c->Wing.Type = MODEL_WING + 35 + Type;
+        }
+    }
+
+    Type = (Equipment[16] >> 5);
+    if (Type > 0)
+    {
+        switch (Type)
+        {
+        case 0x01: c->Wing.Type = MODEL_WING + 130;	break;
+        case 0x02: c->Wing.Type = MODEL_WING + 131;	break;
+        case 0x03: c->Wing.Type = MODEL_WING + 132;	break;
+        case 0x04: c->Wing.Type = MODEL_WING + 133;	break;
+        case 0x05: c->Wing.Type = MODEL_WING + 134;	break;
+        }
     }
 
     if (pHelper == NULL)
