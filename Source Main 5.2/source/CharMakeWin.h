@@ -39,6 +39,7 @@ public:
     void Show(bool bShow);
     bool CursorInWin(int nArea);
     void UpdateDisplay();
+    void RestoreFocus();
 protected:
     void PreRelease();
     void UpdateWhileActive(double dDeltaTick);

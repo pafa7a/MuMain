@@ -520,7 +520,10 @@ void ReceiveCharacterCard_New(const BYTE* ReceiveBuffer)
     if ((Data->CharacterCard & CLASS_SUMMONER_CARD) == CLASS_SUMMONER_CARD)
         g_CharCardEnable.bCharacterEnable[2] = true;
 
-    g_ConsoleDebug->Write(MCD_NORMAL, "[BOTH MESSAGE] CharacterCard Recv %d = %d %d %d", Data->CharacterCard, g_CharCardEnable.bCharacterEnable[0], g_CharCardEnable.bCharacterEnable[1], g_CharCardEnable.bCharacterEnable[2]);
+    if ((Data->CharacterCard & CLASS_RAGE_FIGHTER_CARD) == CLASS_RAGE_FIGHTER_CARD)
+        g_CharCardEnable.bCharacterEnable[3] = true;
+
+    g_ConsoleDebug->Write(MCD_NORMAL, "[BOTH MESSAGE] CharacterCard Recv %d = %d %d %d", Data->CharacterCard, g_CharCardEnable.bCharacterEnable[0], g_CharCardEnable.bCharacterEnable[1], g_CharCardEnable.bCharacterEnable[2], g_CharCardEnable.bCharacterEnable[3]);
 }
 
 void ReceiveCreateCharacter(const BYTE* ReceiveBuffer)
@@ -565,10 +568,12 @@ void ReceiveCreateCharacter(const BYTE* ReceiveBuffer)
         rUIMng.m_CharSelMainWin.UpdateDisplay();
         rUIMng.m_CharInfoBalloonMng.UpdateDisplay();
     }
-    else if (Data->Result == 0)
+    else if (Data->Result == 0) {
         CUIMng::Instance().PopUpMsgWin(RECEIVE_CREATE_CHARACTER_FAIL);
-    else if (Data->Result == 2)
+    }
+    else if (Data->Result == 2) {
         CUIMng::Instance().PopUpMsgWin(RECEIVE_CREATE_CHARACTER_FAIL2);
+    }
 
     g_ConsoleDebug->Write(MCD_RECEIVE, "0x01 [ReceiveCreateCharacter]");
 }
@@ -13847,7 +13852,6 @@ static void HandleIncomingPacket(int32_t Handle, const BYTE* ReceiveBuffer, int3
 
 static void HandleIncomingPacketLocked(int32_t Handle, const BYTE* ReceiveBuffer, int32_t Size)
 {
-    g_render_lock->lock();
     wglMakeCurrent(g_hDC, g_hRC);
     try
     {
@@ -13857,7 +13861,6 @@ static void HandleIncomingPacketLocked(int32_t Handle, const BYTE* ReceiveBuffer
     {
     }
     wglMakeCurrent(nullptr, nullptr);
-    g_render_lock->unlock();
 }
 
 bool CheckExceptionBuff(eBuffState buff, OBJECT* o, bool iserase)

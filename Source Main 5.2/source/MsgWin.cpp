@@ -489,6 +489,9 @@ void CMsgWin::ManageOKClick()
         RequestDeleteCharacter();
         PopUp(MESSAGE_WAIT);
         break;
+    case RECEIVE_CREATE_CHARACTER_FAIL:
+    case RECEIVE_CREATE_CHARACTER_FAIL2:
+        CUIMng::Instance().m_CharMakeWin.RestoreFocus();
     }
 }
 

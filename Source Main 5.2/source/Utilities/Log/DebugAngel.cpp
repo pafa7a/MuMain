@@ -4,6 +4,7 @@
 #include "stdafx.h"
 //#include <dxerr8.h>
 #include "DebugAngel.h"
+#include <time.h>
 
 void WriteDebugInfoStr(char* lpszFileName, char* lpszToWrite)
 {
@@ -32,7 +33,7 @@ void GetCurrentTimeWrapped(char* timeStr) {
     time(&currentTime);
 
     // Convert the time to a string
-    std::strftime(timeStr, 64, "[%Y-%m-%d %H:%M:%S] ", std::localtime(&currentTime));
+    strftime(timeStr, 64, "[%Y-%m-%d %H:%M:%S] ", localtime(&currentTime));
 }
 
 

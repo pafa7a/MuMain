@@ -68,9 +68,6 @@
 #include <chrono>
 #include <thread>
 
-#include "SpinLock.h"
-
-class SpinLock;
 extern CUITextInputBox* g_pSingleTextInputBox;
 extern CUITextInputBox* g_pSinglePasswdInputBox;
 extern int g_iChatInputType;
@@ -2403,7 +2400,6 @@ void MainScene(HDC hDC)
 
     bool Success = false;
 
-    //g_render_lock->lock();
     try
     {
         if (SceneFlag == LOG_IN_SCENE)
@@ -2770,7 +2766,6 @@ extern GLvoid KillGLWindow(GLvoid);
 
 void Scene(HDC hDC)
 {
-    g_render_lock->lock();
     wglMakeCurrent(hDC, g_hRC);
     try
     {
@@ -2805,7 +2800,6 @@ void Scene(HDC hDC)
     }
 
     wglMakeCurrent(nullptr, nullptr);
-    g_render_lock->unlock();
 }
 
 bool GetTimeCheck(int DelayTime)

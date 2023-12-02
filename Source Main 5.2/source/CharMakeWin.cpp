@@ -430,3 +430,8 @@ void CCharMakeWin::RenderCreateCharacter()
 
     EndOpengl();
 }
+
+void CCharMakeWin::RestoreFocus() {
+    CUIMng& rUIMng = CUIMng::Instance();
+    rUIMng.ShowWin(this);
+}
