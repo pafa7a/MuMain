@@ -67,7 +67,9 @@
 #include "MapManager.h"
 #include <chrono>
 #include <thread>
+#include "SpinLock.h"
 
+class SpinLock;
 extern CUITextInputBox* g_pSingleTextInputBox;
 extern CUITextInputBox* g_pSinglePasswdInputBox;
 extern int g_iChatInputType;
@@ -2766,6 +2768,9 @@ extern GLvoid KillGLWindow(GLvoid);
 
 void Scene(HDC hDC)
 {
+    if (SceneFlag != CHARACTER_SCENE) {
+        g_render_lock->lock();
+    }
     wglMakeCurrent(hDC, g_hRC);
     try
     {
@@ -2800,6 +2805,7 @@ void Scene(HDC hDC)
     }
 
     wglMakeCurrent(nullptr, nullptr);
+    g_render_lock->unlock();
 }
 
 bool GetTimeCheck(int DelayTime)

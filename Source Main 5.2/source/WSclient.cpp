@@ -13852,6 +13852,7 @@ static void HandleIncomingPacket(int32_t Handle, const BYTE* ReceiveBuffer, int3
 
 static void HandleIncomingPacketLocked(int32_t Handle, const BYTE* ReceiveBuffer, int32_t Size)
 {
+    g_render_lock->lock();
     wglMakeCurrent(g_hDC, g_hRC);
     try
     {
@@ -13861,6 +13862,7 @@ static void HandleIncomingPacketLocked(int32_t Handle, const BYTE* ReceiveBuffer
     {
     }
     wglMakeCurrent(nullptr, nullptr);
+    g_render_lock->unlock();
 }
 
 bool CheckExceptionBuff(eBuffState buff, OBJECT* o, bool iserase)
